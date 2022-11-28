@@ -29,34 +29,36 @@
 // *     You should have received a copy of the GNU General Public License
 // *     along with this program.  If not, see <https://www.gnu.org/licenses/>
 // */
-//
-//package one.empty3.apps.opad;
-//
-//import one.empty3.library.Point2D;
-//
-//import java.awt.*;
-//
-//public class Plasma {
-//    public static double scale;
-//    public static double t_factor = 0.01;
-//
-//    public static double f(double x, double y, double t) {
-//        return Math.sin(
-//                new Point2D(x, y).
-//                        distance(
-//                                new Point2D(
-//                                        (Math.sin(-t*t_factor)),
-//                                        (Math.cos(-t*t_factor)))
-//                        ) / scale
-//        );
-//
-//    }
-//
-//    public static Color color(double x, double y, double t) {
-//        return new Color(
-//                (float)((Math.cos(Math.PI * f(x,y,t) + 0.5 + t*t_factor)+1)/2),
-//                (float) ((Math.cos(Math.PI * f(x, y, t) + 1.0 + t * t_factor + Math.PI / 2) + 1) / 2),
-//                (float) ((Math.cos(Math.PI * f(x, y, t) + 1.5 + t * t_factor + Math.PI) + 1) / 2)
-//        );
-//    }
-//}
+
+package one.empty3.apps.opad;
+
+import javaAnd.awt.Color;
+import one.empty3.library.Point2D;
+
+import java.awt.*;
+
+public class Plasma {
+    public static double scale;
+    public static double t_factor = 0.01;
+
+    public static double f(double x, double y, double t) {
+        return Math.sin(
+                new Point2D(x, y).
+                        distance(
+                                new Point2D(
+                                        (Math.sin(-t*t_factor)),
+                                        (Math.cos(-t*t_factor)))
+                        ) / scale
+        );
+
+    }
+
+    public static Color color(double x, double y, double t) {
+        return Color.color(
+                (float)((Math.cos(Math.PI * f(x,y,t) + 0.5 + t*t_factor)+1)/2),
+                (float) ((Math.cos(Math.PI * f(x, y, t) + 1.0 + t * t_factor + Math.PI / 2) + 1) / 2),
+                (float) ((Math.cos(Math.PI * f(x, y, t) + 1.5 + t * t_factor + Math.PI) + 1) / 2),
+                0f
+        );
+    }
+}

@@ -1,13 +1,10 @@
 package one.empty3.apps.opad.droid
 
-import android.animation.Animator
 import android.opengl.GLES11
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.opengl.GLU
-import javaAnd.awt.Color
 import one.empty3.apps.opad.*
-import one.empty3.apps.opad.help.PiloteAuto
 import one.empty3.library.*
 import one.empty3.library.core.nurbs.CourbeParametriquePolynomiale
 import one.empty3.library.core.nurbs.ParametricCurve
@@ -17,14 +14,17 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import java.util.function.Consumer
-import java.util.logging.Level
-import java.util.logging.Logger
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
 
-class MyGLRenderer : GLSurfaceView.Renderer {
-    private val terrain: Terrain = SolPlan()
+
+class MyGLRenderer() : GLSurfaceView.Renderer {
+    private lateinit var timer: Timer
+    private lateinit var bonus: Bonus
+    private lateinit var vaisseau: Vaisseau
+    private val INCR_AA: Double = 0.01
+    private var terrain: Terrain = SolPlan()
     private lateinit var mover: PositionUpdate
 
     //private mover : Mover3D
@@ -152,7 +152,7 @@ class MyGLRenderer : GLSurfaceView.Renderer {
         GLES20.glEnd()
     }
 */
-    fun draw(tri: TRI, glu: TRI) {
+    fun draw(tri: TRI, glu: GLU) {
         val wallCoords : FloatArray = FloatArray(12)
         val bb: ByteBuffer = ByteBuffer.allocateDirect(3*4)
         // (number of coordinate values * 4 bytes per float) wallCoords.length * 4
@@ -179,19 +179,19 @@ class MyGLRenderer : GLSurfaceView.Renderer {
 
     }
 
-    open fun draw2(tri: TRI, glu: TRI?, guard: Boolean) {
-        val wallCoords : FloatArray = FloatArray(12)
-        val bb: ByteBuffer = ByteBuffer.allocateDirect(3*4)
+    fun draw2(tri: TRI, glu: GLU, guard: Boolean) {
+        val wallCoords: FloatArray = FloatArray(12)
+        val bb: ByteBuffer = ByteBuffer.allocateDirect(3 * 4)
 
 
-        if (!guard) gl.glBegin(GLES20.GL_TRIANGLES)
-        var i=0
+        if (!guard);
+        var i = 0
         for (sommet in tri.sommet.getData1d()) {
             wallCoords[i++] = sommet.get(0).toFloat()
             wallCoords[i++] = sommet.get(1).toFloat()
             wallCoords[i++] = sommet.get(2).toFloat()
         }
-        if (!guard) gl.glEnd()
+        if (!guard);
 
 
 // use the device hardware's native byte order
@@ -207,8 +207,7 @@ class MyGLRenderer : GLSurfaceView.Renderer {
         vertexBuffer.position(0)
     }
 
-    open fun draw(s: TRIObjetGenerateur, glu: GLU?, gl: GL2) {
-        gl.glBegin(GL2.GL_TRIANGLES)
+    fun draw(s: TRIObjetGenerateur, glu: GLU) {
         for (i in 0 until s.maxX) {
             for (j in 0 until s.maxY) {
                 val tris = arrayOfNulls<TRI>(2)
@@ -216,15 +215,13 @@ class MyGLRenderer : GLSurfaceView.Renderer {
                 tris[0] = TRI(INFINI, INFINI, INFINI)
                 tris[1] = TRI(INFINI, INFINI, INFINI)
                 s.getTris(i, j, tris)
-                draw(tris[0], glu, gl)
-                draw(tris[1], glu, gl)
+                tris[0]?.let { draw(it, glu) }
+                tris[1]?.let { draw(it, glu) }
             }
         }
-        gl.glEnd()
     }
 
     open fun draw2(s: TRIObjetGenerateur, glu: GLU) {
-        gl.glBegin(GL2.GL_TRIANGLES)
         for (i in 0 until s.maxX) {
             for (j in 0 until s.maxY) {
                 val tris = arrayOfNulls<TRI>(2)
@@ -232,19 +229,18 @@ class MyGLRenderer : GLSurfaceView.Renderer {
                 tris[0] = TRI(INFINI, INFINI, INFINI)
                 tris[1] = TRI(INFINI, INFINI, INFINI)
                 s.getTris(i, j, tris)
-                draw(tris[0], glu)
-                draw(tris[1], glu)
+                tris[0]?.let { draw(it, glu) }
+                tris[1]?.let { draw(it, glu) }
             }
         }
-        gl.glEnd()
     }
 
     open fun draw(gen: TRIGenerable, glu: GLU) {
-        draw(gen.generate(), glu, gl)
+        draw(gen.generate(), glu)
     }
 
     open fun draw(gen: TRIObject, glu: GLU) {
-        gen.triangles.forEach(Consumer { t: TRI? -> draw(t, glu, gl) })
+        gen.triangles.forEach(Consumer { t: TRI -> draw(t, glu) })
     }
 
     @Synchronized
@@ -255,11 +251,11 @@ class MyGLRenderer : GLSurfaceView.Renderer {
             try {
                 r = it.next()
                 if (r is TRI) {
-                    draw(r as TRI?, glu, gl)
+                    draw(r as TRI, glu)
                 } else if (r is LineSegment) {
-                    draw(r, glu, gl)
+                    draw(r as ParametricCurve, glu)
                 } else if (r is ParametricSurface) {
-                    draw(r, glu, gl)
+                    draw(r as ParametricSurface, glu)
                 }
             } catch (ex: ConcurrentModificationException) {
                 ex.printStackTrace()
@@ -268,10 +264,15 @@ class MyGLRenderer : GLSurfaceView.Renderer {
         }
     }
 
-    private open fun draw(s: ParametricSurface, glu: GLU?, gl: GL2) {
-        gl.glBegin(GL2.GL_TRIANGLES)
-        for (i in 0 until s.incrU.toInt()) {
-            for (j in 0 until s.incrV.toInt()) {
+    fun draw(s: ParametricSurface, glu: GLU) {
+        var i:Double = 0.0
+        var j:Double = 0.0
+        val incrA : Int = (1.0/(s.incrU/(s.endU-s.startU))).toInt()
+        val incrB : Int = (1.0/(s.incrV/(s.endV-s.startV))).toInt()
+        for (a in 0..incrA) {
+            for (b in 0..incrB) {
+                i = a/incrA.toDouble()
+                i = b/incrB.toDouble()
                 val elementSurface = s.getElementSurface(i, s.incrU, j, s.incrV)
                 val INFINI = Point3D.INFINI
                 draw2(
@@ -279,7 +280,7 @@ class MyGLRenderer : GLSurfaceView.Renderer {
                         elementSurface.points.getElem(0),
                         elementSurface.points.getElem(1),
                         elementSurface.points.getElem(2), s.texture()
-                    ), glu, gl, true
+                    ), glu, true
                 )
                 draw2(
                     TRI(
@@ -287,17 +288,21 @@ class MyGLRenderer : GLSurfaceView.Renderer {
                         elementSurface.points.getElem(3),
                         elementSurface.points.getElem(0), s.texture()
                     ),
-                    glu, gl, true
+                    glu, true
                 )
             }
         }
-        gl.glEnd()
     }
 
-    private open fun draw(t: Terrain, s: ParametricSurface, glu: GLU) {
-        gl.glBegin(GL2.GL_TRIANGLES)
-        for (i in 0 until s.incrU) {
-            for (j in 0 until s.incrV) {
+    fun draw(t: Terrain, s: ParametricSurface, glu: GLU) {
+        var i:Double = 0.0
+        var j:Double = 0.0
+        val incrA : Int = (1.0/(s.incrU/(s.endU-s.startU))).toInt()
+        val incrB : Int = (1.0/(s.incrV/(s.endV-s.startV))).toInt()
+        for (a in 0..incrA) {
+            for (b in 0..incrB) {
+                i = a/incrA.toDouble()
+                i = b/incrB.toDouble()
                 val elementSurface = s.getElementSurface(i, s.incrU, j, s.incrV)
                 val INFINI = Point3D.INFINI
                 draw2(
@@ -305,108 +310,35 @@ class MyGLRenderer : GLSurfaceView.Renderer {
                         t.p3(elementSurface.points.getElem(0)),
                         t.p3(elementSurface.points.getElem(1)),
                         t.p3(elementSurface.points.getElem(2))
-                    ), glu, gl, true
+                    ), glu, true
                 )
                 draw2(
                     TRI(
                         t.p3(elementSurface.points.getElem(2)),
                         t.p3(elementSurface.points.getElem(3)),
                         t.p3(elementSurface.points.getElem(0))
-                    ), glu, gl, true
+                    ), glu, true
                 )
             }
         }
-        gl.glEnd()
     }
 
 
-    open fun draw(con: TRIConteneur, glu: GLU) {
+    fun draw(con: TRIConteneur, glu: GLU) {
         /*if(con.getObj()==null && con instanceof TRIGenerable)
          {
          ((TRIGenerable)con).generate();
          }*/
         val iterable = con.iterable()
-        iterable.forEach(Consumer { t: TRI? -> draw(t, glu, gl) })
+        iterable.forEach(Consumer { t: TRI -> draw(t, glu) })
     }
 
-    open fun draw(c: Cube, glu: GLU) {
+    fun draw(c: Cube, glu: GLU) {
         val generate = c.generate()
-        draw(generate, glu, gl)
+        draw(generate, glu)
     }
 
-    open fun draw(text: String?, textColor: java.awt.Color?, glu: GLU) {
-        var d: java.awt.Dimension = java.awt.Dimension(1, 1)
-        if (component is JFrame) {
-            d = (component as JFrame).getSize()
-        }
-        renderer.beginRendering(d.getWidth().toInt(), d.getHeight().toInt())
-        renderer.setColor(1.0f, 0.2f, 0.2f, 0.8f)
-        renderer.draw(text, 10, 10)
-        renderer.endRendering()
-    }
-
-    open fun drawToggleMenu(glu: GLU?, gl: GL2?) {
-        if (toggleMenu.isDisplayMenu()) {
-            var d: java.awt.Dimension = java.awt.Dimension(1, 1)
-            if (component is JFrame) {
-                d = (component as JFrame).getSize()
-            }
-            renderer.beginRendering(d.getWidth().toInt(), d.getHeight().toInt())
-            val split: Array<String> = toggleMenu.toString().split("\\n")
-            renderer.setColor(1.0f, 0.2f, 0.2f, 0.8f)
-            renderer.draw(split[0], 0, d.getHeight().toInt() - 50 - 0 * 20)
-            for (i in 1 until split.size) {
-                if (i - 1 == toggleMenu.getIndex()) {
-                    renderer.setColor(0.2f, 0.1f, 0.2f, 0.8f)
-                } else {
-                    renderer.setColor(1.0f, 0.2f, 0.2f, 0.8f)
-                }
-                renderer.draw(split[i], 0, d.getHeight().toInt() - 50 - i * 30)
-            }
-            renderer.endRendering()
-        }
-    }
-
-
-    open fun draw(
-        text: String?,
-        place: java.awt.Dimension?,
-        textColor: java.awt.Color?,
-        glu: GLU) {
-        var d: java.awt.Dimension = java.awt.Dimension(1, 1)
-        if (component is JFrame) {
-            d = (component as JFrame).getSize()
-        }
-        renderer.beginRendering(d.getWidth().toInt(), d.getHeight().toInt())
-        renderer.setColor(1.0f, 0.2f, 0.2f, 0.8f)
-        renderer.draw(text, (d.getWidth() - 200).toInt(), 10)
-        renderer.endRendering()
-    }
-    /*public void drawCard(Card c, GLU glu, GL2 gl)
-     {
-     //Buffer buffer;
-     Dimension d = new Dimension(1,1);
-     if(component instanceof JFrame)
-     {
-     d = ((JFrame)component).getSize();
-     }
-     //gl.glDrawPixels(0, 0, d.getWidth(), d.getHeight(),  buffer);
-
-     }*/
-
-
-    /*public void drawCard(Card c, GLU glu, GL2 gl)
-     {
-     //Buffer buffer;
-     Dimension d = new Dimension(1,1);
-     if(component instanceof JFrame)
-     {
-     d = ((JFrame)component).getSize();
-     }
-     //gl.glDrawPixels(0, 0, d.getWidth(), d.getHeight(),  buffer);
-
-     }*/
-    private open fun displayArcs(glu: GLU, gl: GL2) {
+    fun displayArcs(glu: GLU) {
         val arc = arrayOf(
             arrayOf(
                 P.n(0.5, 0.5, 0.0),
@@ -434,15 +366,14 @@ class MyGLRenderer : GLSurfaceView.Renderer {
         // TODO draw(courbeParametriquePolynomialeBezierTubulaireN22, glu, gl);
         }
 
-    private open fun displayTerrain(glu: GLU, gl: GL2) {
-        draw(terrain as RepresentableConteneur, glu, gl)
+    fun displayTerrain(glu: GLU) {
+        draw(terrain as RepresentableConteneur, glu)
     }
 
 
-    private open fun displayGround(glu: GLU, gl: GL2) {
+    fun displayGround(glu: GLU) {
         var nbrTriReduce = 0
         val maxDistance = 0.01
-        gl.glBegin(GL2.GL_TRIANGLES)
         var i = 0.0
         while (i <= 1) {
             var j = 0.0
@@ -489,8 +420,8 @@ class MyGLRenderer : GLSurfaceView.Renderer {
                     val point3D = arrayOfNulls<Point3D>(6)
                     for (p in intArrayOf(0, 1, 2)) {
                         val p3 = arrayOf(
-                            t.getSommet().getElem(0),
-                            t.getSommet().getElem(1), t.getSommet().getElem(2)
+                            t?.getSommet().getElem(0),
+                            t?.getSommet().getElem(1), t.getSommet().getElem(2)
                         )
                         for (coord in 0..2) {
                             when (coord) {
@@ -564,7 +495,7 @@ class MyGLRenderer : GLSurfaceView.Renderer {
                                 toDraw.sommet.setElem(getTerrain().p3(point3D[g]), g)
                             }
                             toDraw.texture(ColorTexture(Plasma.color(i + a, j + a, time())))
-                            draw2(toDraw, glu, gl, true)
+                            draw2(toDraw, glu, true)
                             toDraw = TRI()
                             for (g in 0..2) {
                                 toDraw.sommet.setElem(getTerrain().p3(point3D[g + 3]), g)
@@ -572,7 +503,7 @@ class MyGLRenderer : GLSurfaceView.Renderer {
                             toDraw.texture(ColorTexture(Plasma.color(i + a, j + a, time())))
                             toDraw.texture(ColorTexture(Plasma.color(i + a, j + a, time())))
                             //if(isClose(maxDistance, toDraw))
-                            draw2(toDraw, glu, gl, true)
+                            toDraw?.let {draw2(toDraw, glu)}
                         }
                     }
                     index++
@@ -581,10 +512,13 @@ class MyGLRenderer : GLSurfaceView.Renderer {
             }
             i += INCR_AA
         }
-        gl.glEnd()
     }
 
-    private open fun isClose(maxDistance: Double, toDraw: TRI): Boolean {
+    private fun draw2(s: TRI, glu: GLU) {
+
+    }
+
+    fun isClose(maxDistance: Double, toDraw: TRI): Boolean {
         return Point3D.distance(
             getTerrain().p3(toDraw.sommet.getElem(0)),
             mover.calcCposition()
@@ -592,25 +526,25 @@ class MyGLRenderer : GLSurfaceView.Renderer {
     }
 
 
-    private open fun drawTriLines(triCourant: TRI, glu: GLU, gl: GL2, b: Boolean) {}
+    fun drawTriLines(triCourant: TRI, glu: GLU, b: Boolean) {}
 
 
-    private open fun draw(courbeParametriquePolynomiale: ParametricCurve, glu: GLU, gl: GL2) {
-        var d0 = courbeParametriquePolynomiale.start()
-        var d = courbeParametriquePolynomiale.start()
-        while (d < courbeParametriquePolynomiale.endU()) {
+    fun draw(c: ParametricCurve, glu: GLU) {
+        var d0 = c.start()
+        var d = c.start()
+        while (d < c.endU()) {
             draw(
                 LineSegment(
-                    courbeParametriquePolynomiale.calculerPoint3D(d0),
-                    courbeParametriquePolynomiale.calculerPoint3D(d)
-                ), glu, gl
+                    c.calculerPoint3D(d0),
+                    c.calculerPoint3D(d)
+                ) as ParametricCurve, glu
             )
             d0 = d
-            d += courbeParametriquePolynomiale.incrU.elem
+            d += c.incrU.elem
         }
     }
 
-    private open fun drawTrajectory(plotter3D: Plotter3D?, glu: GLU, gl: GL2) {
+    fun drawTrajectory(plotter3D: Plotter3D?, glu: GLU) {
         if (plotter3D == null) return
         val impact = plotter3D.impact
         draw(
@@ -619,66 +553,9 @@ class MyGLRenderer : GLSurfaceView.Renderer {
                     getMover().calcCposition(),
                     getTerrain().calcCposition(impact.x, impact.y)
                 )
-            ), glu, gl
-        )
+            ), glu)
     }
 
-    open fun displayChanged(
-        gLDrawable: GLAutoDrawable, modeChanged: Boolean,
-        deviceChanged: Boolean
-    ) {
-        reshape(gLDrawable, 0, 0, glCanvas.getWidth(), glCanvas.getHeight())
-    }
-
-    open fun init(gLDrawable: GLAutoDrawable) {
-        /*
-         * Logger.getAnonymousLogger().log(Level.INFO, "init() called"); GL2 gl =
-         * gLDrawable.getGL().getGL2(); gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-         * gl.glShadeModel(GL2.GL_FLAT);
-         */
-        gl = gLDrawable.getGL().getGL2()
-        gLDrawable.setGL(DebugGL2(gl))
-
-        // Global settings.
-        gl.glEnable(GL2.GL_DEPTH_TEST)
-
-        /*
-         gl.glDepthFunc(GL2.GL_LEQUAL);
-         gl.glShadeModel(GL2.GL_SMOOTH);
-         gl.glHint(GL2.GL_PERSPECTIVE_CORRECTION_HINT, GL2.GL_NICEST);
-
-         */gl.glClearColor(0f, 0f, 0f, 1f)
-
-        // Start animator (which should be a field).
-        renderer = TextRenderer(java.awt.Font("SansSerif", java.awt.Font.BOLD, 36))
-    }
-
-    open fun reshape(
-        gLDrawable: GLAutoDrawable, x: Int, y: Int, width: Int,
-        height: Int
-    ) {
-        var height = height
-        if (glu == null) glu = GLU()
-        Logger.getAnonymousLogger().log(
-            Level.INFO, "reshape() called: coordArr = " + x + ", y = " + y
-                    + ", width = " + width + ", height = " + height
-        )
-        val gl: GL2 = gLDrawable.getGL().getGL2()
-        if (height <= 0) // avoid a divide by zero error!
-        {
-            height = 1
-        }
-        val h = width.toFloat() / height.toFloat()
-        gl.glViewport(0, 0, width, height)
-        gl.glMatrixMode(GL2.GL_PROJECTION)
-        gl.glLoadIdentity()
-        glu.gluPerspective(90f, width.toFloat() / height.toFloat(), 0.001f, 10f)
-        gl.glMatrixMode(GL2.GL_MODELVIEW)
-    }
-
-    open fun dispose(arg0: GLAutoDrawable?) {
-        Logger.getAnonymousLogger().log(Level.INFO, "dispose() called")
-    }
 
     open fun setLogic(m: PositionUpdate?) {
         mover = m
@@ -688,47 +565,14 @@ class MyGLRenderer : GLSurfaceView.Renderer {
         mover.ennemi(bonus)
     }
 
-    private open fun locked(): Boolean {
-        return locked
-    }
-
-    private open fun time(): Double {
+    fun time(): Double {
         return timer.getTimeEllapsed()
-    }
-
-    open fun click(p: Point2D?): LineSegment? {
-        val glul: GLU = this.glu
-
-        /*
-         double aspect = double(glcanvas.getWidth())/double(glcanvas.getHeight());
-         glu.glMatrixMode( GL_PROJECTION );
-         glLoadIdentity();
-         glFrustum(-near_height * aspect,
-         near_height * aspect,
-         -near_height,
-         near_height,
-         zNear,
-         zFar );
-         int window_y = (window_height - mouse_y) - window_height/2;
-         double norm_y = double(window_y)/double(window_height/2);
-         int window_x = mouse_x - window_width/2;
-         double norm_x = double(window_x)/double(window_width/2);
-         float y = near_height * norm_y; float coordArr = near_height * aspect * norm_x;
-         float ray_pnt[4] = {0.f, 0.f, 0.f, 1.f}; float ray_vec[4] = {coordArr, y, -near_distance, 0.f};
-
-         GLuint buffer[BUF_SIZE]; glSelectBuffer (BUF_SIZE, buffer);
-         GLint hits; glRenderMode(GL_SELECT);
-         glRenderMode(GL_RENDER);
-         */return null
     }
 
     open fun getGlu(): GLU? {
         return glu
     }
 
-    open fun getComponent(): Any? {
-        return component
-    }
     /*
      * sets up selection mode, name stack, and projection matrix for picking. Then
      * the objects are drawn.
@@ -741,7 +585,6 @@ class MyGLRenderer : GLSurfaceView.Renderer {
     open fun getMover(): PositionUpdate {
         return mover
     }
-*/
     open fun getTerrain(): Terrain {
         return terrain
     }

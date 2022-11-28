@@ -5,6 +5,11 @@ public class Color extends android.graphics.Color/*android.graphics.Color*/ {
     public Color(android.graphics.Color color) {
     }
 
+    public static Color color(float v, float v1, float v2, float v3) {
+        return (Color) Color.valueOf(v,v1, v2);
+
+    }
+
     public static android.graphics.Color color(int colorAt) {
         return android.graphics.Color.valueOf(colorAt);
     }
