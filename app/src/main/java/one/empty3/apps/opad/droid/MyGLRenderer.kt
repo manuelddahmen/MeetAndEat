@@ -20,6 +20,9 @@ import javax.microedition.khronos.opengles.GL10
 
 
 class MyGLRenderer() : GLSurfaceView.Renderer {
+    private lateinit var plotter3D: Plotter3D
+    private lateinit var toggleMenu: ToggleMenu
+    private lateinit var circuit: Circuit
     private lateinit var glu: GLU
     private lateinit var timer: Timer
     private lateinit var bonus: Bonus
@@ -72,9 +75,10 @@ class MyGLRenderer() : GLSurfaceView.Renderer {
             dir[0].toFloat(), dir[1].toFloat(), dir[2].toFloat(),
             up[0].toFloat(), up[1].toFloat(), up[2].toFloat())
 
-/*
+
+
         if (circuit == null) circuit = mover.getCircuit()
-        if (circuit != null) draw(circuit as TRIConteneur?, glu, gl)
+        //if (circuit != null) draw(circuit as TRIConteneur, glu)
 
 
         if (toggleMenu == null) return
@@ -83,34 +87,36 @@ class MyGLRenderer() : GLSurfaceView.Renderer {
                 val center = (representable as TRISphere2<*>).coords
                 (representable as TRISphere2<*>).circle.axis.elem.center = terrain.p3(center)
             })
-            draw(bonus, glu, gl)
+            draw(bonus, glu)
         }
-        if (toggleMenu.isDisplaySky()) draw(Ciel().bleu, glu, gl)
+        if (toggleMenu.isDisplaySky()) draw(Ciel().bleu, glu)
 
-        if (toggleMenu.isDisplayGroundGrid()) draw(terrain, glu, gl)
+        if (toggleMenu.isDisplayGroundGrid()) draw(terrain, glu)
         if (toggleMenu.isDisplayGround()) {
             if (terrain.isDessineMurs()) {
-                displayGround(glu, gl)
+                displayGround(glu)
             }
         }
         if (toggleMenu.isDisplayArcs() && SolPlan::class.java == getLevel()) {
-            displayArcs(glu, gl)
+            displayArcs(glu)
         }
         if (toggleMenu.isDisplayCharacter()) {
             val `object`: Cube = vaisseau.getObject()
             `object`.setPosition(mover.calcCposition())
-            draw(`object`, glu, gl)
+            draw(`object` as Cube, glu)
             if (getPlotter3D() != null && getPlotter3D().isActive()) {
                 val courbeParametriquePolynomiale: CourbeParametriquePolynomiale? = null
             }
         }
-
+/*
         if (toggleMenu.isDisplayScore()) draw(
             "Score :  " + mover.score(),
             java.awt.Color.WHITE,
             glu,
             gl
         )
+  */
+        /*
         if (toggleMenu.isDisplayEnergy()) draw(
             "Life :  " + mover.energy(),
             java.awt.Dimension(30, 10),
@@ -118,12 +124,24 @@ class MyGLRenderer() : GLSurfaceView.Renderer {
             glu,
             gl
         )
+*/
 
+        drawToggleMenu(glu)
 
-        drawToggleMenu(glu, gl)
+        drawTrajectory(getPlotter3D(), glu)
 
-        drawTrajectory(getPlotter3D(), glu, gl)
-  */
+    }
+
+    private fun drawToggleMenu(glu: GLU) {
+
+    }
+
+    private fun getLevel(): Any? {
+        TODO("Not yet implemented")
+    }
+
+    private fun getPlotter3D(): Plotter3D {
+        return plotter3D
     }
 
     override fun onSurfaceChanged(unused: GL10, width: Int, height: Int) {
@@ -295,7 +313,7 @@ class MyGLRenderer() : GLSurfaceView.Renderer {
         }
     }
 
-    fun draw(t: Terrain, s: ParametricSurface, glu: GLU) {
+    fun draw(t: Cube, s: ParametricSurface, glu: GLU) {
         var i:Double = 0.0
         var j:Double = 0.0
         val incrA : Int = (1.0/(s.incrU/(s.endU-s.startU))).toInt()
@@ -308,16 +326,16 @@ class MyGLRenderer() : GLSurfaceView.Renderer {
                 val INFINI = Point3D.INFINI
                 draw2(
                     TRI(
-                        t.p3(elementSurface.points.getElem(0)),
-                        t.p3(elementSurface.points.getElem(1)),
-                        t.p3(elementSurface.points.getElem(2))
+                        terrain.p3(elementSurface.points.getElem(0)),
+                        terrain.p3(elementSurface.points.getElem(1)),
+                        terrain.p3(elementSurface.points.getElem(2))
                     ), glu, true
                 )
                 draw2(
                     TRI(
-                        t.p3(elementSurface.points.getElem(2)),
-                        t.p3(elementSurface.points.getElem(3)),
-                        t.p3(elementSurface.points.getElem(0))
+                        terrain.p3(elementSurface.points.getElem(2)),
+                        terrain.p3(elementSurface.points.getElem(3)),
+                        terrain.p3(elementSurface.points.getElem(0))
                     ), glu, true
                 )
             }
