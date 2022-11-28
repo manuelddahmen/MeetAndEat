@@ -20,6 +20,7 @@ import javax.microedition.khronos.opengles.GL10
 
 
 class MyGLRenderer() : GLSurfaceView.Renderer {
+    private lateinit var glu: GLU
     private lateinit var timer: Timer
     private lateinit var bonus: Bonus
     private lateinit var vaisseau: Vaisseau
@@ -419,91 +420,95 @@ class MyGLRenderer() : GLSurfaceView.Renderer {
                     */
                     val point3D = arrayOfNulls<Point3D>(6)
                     for (p in intArrayOf(0, 1, 2)) {
-                        val p3 = arrayOf(
-                            t?.getSommet().getElem(0),
-                            t?.getSommet().getElem(1), t.getSommet().getElem(2)
-                        )
-                        for (coord in 0..2) {
-                            when (coord) {
-                                0 -> {
-                                    point3D[0] = Point3D(p3[0][coord], i, j)
-                                    point3D[1] = Point3D(
-                                        p3[0][coord], i + INCR_AA,
-                                        j
-                                    )
-                                    point3D[2] = Point3D(
-                                        p3[0][coord], i + INCR_AA,
-                                        j + INCR_AA
-                                    )
-                                    point3D[3] = Point3D(p3[0][coord], i, j)
-                                    point3D[4] = Point3D(
-                                        p3[0][coord], i,
-                                        j + INCR_AA
-                                    )
-                                    point3D[5] = Point3D(
-                                        p3[0][coord], i + INCR_AA,
-                                        j + INCR_AA
-                                    )
+                        if (t != null && t.sommet != null && t.sommet.data1d.size >= 3) {
+                            val p3 = arrayOf(
+                                t.getSommet().getElem(0),
+                                t.getSommet().getElem(1), t.getSommet().getElem(2)
+                            )
+                            for (coord in 0..2) {
+                                when (coord) {
+                                    0 -> {
+                                        point3D[0] = Point3D(p3[0][coord], i, j)
+                                        point3D[1] = Point3D(
+                                            p3[0][coord], i + INCR_AA,
+                                            j
+                                        )
+                                        point3D[2] = Point3D(
+                                            p3[0][coord], i + INCR_AA,
+                                            j + INCR_AA
+                                        )
+                                        point3D[3] = Point3D(p3[0][coord], i, j)
+                                        point3D[4] = Point3D(
+                                            p3[0][coord], i,
+                                            j + INCR_AA
+                                        )
+                                        point3D[5] = Point3D(
+                                            p3[0][coord], i + INCR_AA,
+                                            j + INCR_AA
+                                        )
+                                    }
+
+                                    1 -> {
+                                        point3D[0] = Point3D(i * 2, p3[0][coord], j * 2)
+                                        point3D[1] = Point3D(
+                                            (i + INCR_AA) * 2,
+                                            p3[0][coord], j * 2
+                                        )
+                                        point3D[2] = Point3D(
+                                            (i + INCR_AA) * 2,
+                                            p3[0][coord], (j + INCR_AA) * 2
+                                        )
+                                        point3D[3] = Point3D(i * 2, p3[0][coord], j * 2)
+                                        point3D[4] = Point3D(i * 2, p3[0][coord], (j + INCR_AA) * 2)
+                                        point3D[5] = Point3D(
+                                            (i + INCR_AA) * 2,
+                                            p3[0][coord], (j + INCR_AA) * 2
+                                        )
+                                    }
+
+                                    2 -> {
+                                        point3D[0] = Point3D(
+                                            i * 2, j * 2,
+                                            p3[0][coord]
+                                        )
+                                        point3D[1] = Point3D(
+                                            (i + INCR_AA) * 2, j * 2,
+                                            p3[0][coord]
+                                        )
+                                        point3D[2] = Point3D(
+                                            (i + INCR_AA) * 2, (j + INCR_AA) * 2,
+                                            p3[0][coord]
+                                        )
+                                        point3D[3] = Point3D(
+                                            i * 2, j * 2,
+                                            p3[0][coord]
+                                        )
+                                        point3D[4] = Point3D(
+                                            i * 2, (j + INCR_AA) * 2,
+                                            p3[0][coord]
+                                        )
+                                        point3D[5] = Point3D(
+                                            (i + INCR_AA) * 2, (j + INCR_AA) * 2,
+                                            p3[0][coord]
+                                        )
+                                    }
                                 }
-                                1 -> {
-                                    point3D[0] = Point3D(i * 2, p3[0][coord], j * 2)
-                                    point3D[1] = Point3D(
-                                        (i + INCR_AA) * 2,
-                                        p3[0][coord], j * 2
-                                    )
-                                    point3D[2] = Point3D(
-                                        (i + INCR_AA) * 2,
-                                        p3[0][coord], (j + INCR_AA) * 2
-                                    )
-                                    point3D[3] = Point3D(i * 2, p3[0][coord], j * 2)
-                                    point3D[4] = Point3D(i * 2, p3[0][coord], (j + INCR_AA) * 2)
-                                    point3D[5] = Point3D(
-                                        (i + INCR_AA) * 2,
-                                        p3[0][coord], (j + INCR_AA) * 2
-                                    )
+                                nbrTriReduce++
+                                var toDraw = TRI()
+                                for (g in 0..2) {
+                                    toDraw.sommet.setElem(getTerrain().p3(point3D[g]), g)
                                 }
-                                2 -> {
-                                    point3D[0] = Point3D(
-                                        i * 2, j * 2,
-                                        p3[0][coord]
-                                    )
-                                    point3D[1] = Point3D(
-                                        (i + INCR_AA) * 2, j * 2,
-                                        p3[0][coord]
-                                    )
-                                    point3D[2] = Point3D(
-                                        (i + INCR_AA) * 2, (j + INCR_AA) * 2,
-                                        p3[0][coord]
-                                    )
-                                    point3D[3] = Point3D(
-                                        i * 2, j * 2,
-                                        p3[0][coord]
-                                    )
-                                    point3D[4] = Point3D(
-                                        i * 2, (j + INCR_AA) * 2,
-                                        p3[0][coord]
-                                    )
-                                    point3D[5] = Point3D(
-                                        (i + INCR_AA) * 2, (j + INCR_AA) * 2,
-                                        p3[0][coord]
-                                    )
+                                toDraw.texture(ColorTexture(Plasma.color(i + a, j + a, time())))
+                                draw2(toDraw, glu, true)
+                                toDraw = TRI()
+                                for (g in 0..2) {
+                                    toDraw.sommet.setElem(getTerrain().p3(point3D[g + 3]), g)
                                 }
+                                toDraw.texture(ColorTexture(Plasma.color(i + a, j + a, time())))
+                                toDraw.texture(ColorTexture(Plasma.color(i + a, j + a, time())))
+                                //if(isClose(maxDistance, toDraw))
+                                toDraw?.let { draw2(toDraw, glu) }
                             }
-                            nbrTriReduce++
-                            var toDraw = TRI()
-                            for (g in 0..2) {
-                                toDraw.sommet.setElem(getTerrain().p3(point3D[g]), g)
-                            }
-                            toDraw.texture(ColorTexture(Plasma.color(i + a, j + a, time())))
-                            draw2(toDraw, glu, true)
-                            toDraw = TRI()
-                            for (g in 0..2) {
-                                toDraw.sommet.setElem(getTerrain().p3(point3D[g + 3]), g)
-                            }
-                            toDraw.texture(ColorTexture(Plasma.color(i + a, j + a, time())))
-                            toDraw.texture(ColorTexture(Plasma.color(i + a, j + a, time())))
-                            //if(isClose(maxDistance, toDraw))
-                            toDraw?.let {draw2(toDraw, glu)}
                         }
                     }
                     index++
@@ -557,7 +562,7 @@ class MyGLRenderer() : GLSurfaceView.Renderer {
     }
 
 
-    open fun setLogic(m: PositionUpdate?) {
+    open fun setLogic(m: PositionUpdate) {
         mover = m
         vaisseau = Vaisseau(mover)
         terrain = mover.terrain
