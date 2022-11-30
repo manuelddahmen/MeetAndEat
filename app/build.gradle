@@ -4,7 +4,7 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'maven-publish'
 
 android {
-    namespace 'one.empty3.apps.opad.droid'
+    namespace 'one.empty3.apps.mygame.droid'
     compileSdk 33
     bundle {
         storeArchive {
@@ -26,7 +26,7 @@ android {
         }
     }
     defaultConfig {
-        applicationId "one.empty3.apps.opad.droid"
+        applicationId "one.empty3.apps.mygame.droid"
         minSdk 30
         targetSdk 33
         versionCode 1
