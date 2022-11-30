@@ -30,6 +30,15 @@ class MyGLRenderer() : GLSurfaceView.Renderer {
     private val INCR_AA: Double = 0.01
     private var terrain: Terrain = SolPlan()
     private lateinit var mover: PositionUpdate
+/*
+    constructor MyGLRenderer() : super(){
+        this.mover = PositionUpdateImpl()
+        this.vaisseau = Vaisseau()
+        this.timer = Timer()
+        this.terrain = SolPlan()
+
+    }
+*/
 
     //private mover : Mover3D
     override fun onSurfaceCreated(p0: GL10?, p1: EGLConfig?) {

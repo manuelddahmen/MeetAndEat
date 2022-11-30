@@ -35,8 +35,6 @@ package one.empty3.apps.opad;
 import javaAnd.awt.Color;
 import one.empty3.library.Point2D;
 
-import java.awt.*;
-
 public class Plasma {
     public static double scale;
     public static double t_factor = 0.01;
