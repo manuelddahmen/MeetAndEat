@@ -1,5 +1,6 @@
 package one.empty3.apps.opad.droid
 
+import android.graphics.Color
 import android.opengl.GLES11
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
@@ -30,15 +31,16 @@ class MyGLRenderer() : GLSurfaceView.Renderer {
     private val INCR_AA: Double = 0.01
     private var terrain: Terrain = SolPlan()
     private lateinit var mover: PositionUpdate
-/*
-    constructor MyGLRenderer() : super(){
-        this.mover = PositionUpdateImpl()
-        this.vaisseau = Vaisseau()
-        this.timer = Timer()
-        this.terrain = SolPlan()
 
+
+    init {
+        this.terrain = SolPlan()
+        this.mover = PositionUpdateImpl(terrain, Player("Man",
+            Color.valueOf(0f,0f,0f), 1))
+        this.vaisseau = Vaisseau(mover)
+        this.timer = Timer()
     }
-*/
+
 
     //private mover : Mover3D
     override fun onSurfaceCreated(p0: GL10?, p1: EGLConfig?) {
@@ -54,7 +56,7 @@ class MyGLRenderer() : GLSurfaceView.Renderer {
         var camera: Camera
 
 
-        if (mover.getPlotter3D().isActive())
+        if (mover!=null && mover.getPlotter3D().isActive())
             camera = mover.getPositionMobile().calcCameraMobile()
         else
             camera = mover.getPositionMobile().calcCamera()

@@ -42,7 +42,7 @@
 
 package one.empty3.apps.opad;
 
-import javaAnd.awt.Color;
+import android.graphics.Color;
 import one.empty3.library.Point3D;
 
 import java.io.File;
@@ -78,7 +78,7 @@ public class Player {
         playerId = Integer.parseInt(propertiesPlayer.getProperty("playerId"));
 
         this.name = name;
-        this.color = Color.color(Float.parseFloat(color[0]),
+        this.color = Color.valueOf(Float.parseFloat(color[0]),
                 Float.parseFloat(color[1]),
                 Float.parseFloat(color[2]));
     }
