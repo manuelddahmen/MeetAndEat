@@ -55,7 +55,7 @@ public class Bonus extends RepresentableConteneur {
 
 
     static {
-        bundle = ResourceBundle.getBundle("one.empty3.apps.mygame.Bundle"); // NOI18N
+        bundle = ResourceBundle.getBundle("Bundle"); // NOI18N
         SIZE = Integer.parseInt(bundle.getString("bonus.size"));
         licorne = Integer.parseInt(bundle.getString("licorne.size"));
         escargot = Integer.parseInt(bundle.getString("escargot.size"));

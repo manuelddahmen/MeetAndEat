@@ -29,7 +29,7 @@ android {
         applicationId "one.empty3.apps.mygame.droid"
         minSdk 30
         targetSdk 33
-        versionCode 1
+        versionCode 10000
         versionName "1.0"
         compileSdk 33
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

@@ -59,7 +59,7 @@ public class PositionMobile {
 
     public PositionMobile(PositionUpdate positionUpdate) {
         super();
-        bundle = ResourceBundle.getBundle("one.empty3.apps.mygame.Bundle"); // NOI18N
+        bundle = ResourceBundle.getBundle("Bundle"); // NOI18N
         positionIncrement = Double.parseDouble(bundle.getString("positionIncrement"));
         positionIncrement2 = Double.parseDouble(bundle.getString("positionIncrement2"));
         this.positionUpdate = positionUpdate;

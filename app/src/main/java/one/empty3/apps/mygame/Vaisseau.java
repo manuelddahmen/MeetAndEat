@@ -56,7 +56,7 @@ public class Vaisseau {
     private final double mlc;
 
     {
-        bundle = ResourceBundle.getBundle("one.empty3.apps.mygame.Bundle"); // NOI18N
+        bundle = ResourceBundle.getBundle("Bundle"); // NOI18N
         mlc = Double.parseDouble(bundle.getString("persoCube.mlc"));
     }
     private final PositionUpdate gm;

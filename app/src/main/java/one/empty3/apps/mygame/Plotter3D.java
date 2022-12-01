@@ -212,7 +212,7 @@ public class Plotter3D implements Runnable {
 
 
     class DistanceCount {
-        ResourceBundle bundle = ResourceBundle.getBundle("one.empty3.apps.mygame.Bundle");
+        ResourceBundle bundle = ResourceBundle.getBundle("Bundle");
         private double distance = 1;
         private Point3D dir;
         private long timeMiliisStart;

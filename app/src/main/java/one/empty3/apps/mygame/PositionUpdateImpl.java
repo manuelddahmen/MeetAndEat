@@ -81,7 +81,7 @@ public class PositionUpdateImpl implements PositionUpdate, Runnable {
 
     @RequiresApi(api = Build.VERSION_CODES.S)
     public PositionUpdateImpl(Terrain t, Player player) {
-        bundle = ResourceBundle.getBundle(this.getClass().getPackageName()); // NOI18N
+        bundle = ResourceBundle.getBundle("Bundle"); // NOI18N
         unitPerSec = Double.parseDouble(bundle.getString("unitPerSec"));
         tourSec = Double.parseDouble(bundle.getString("tourSec"));
         rotationPerNano = Double.parseDouble(bundle.getString("rotationPerNanos"));
